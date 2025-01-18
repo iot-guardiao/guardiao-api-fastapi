@@ -1,0 +1,19 @@
+version: '3.9'
+
+services:
+  guardiao_postgres:
+    image: postgres:latest
+    container_name: guardiao_postgres
+    environment:
+      POSTGRES_USER: guardiao_user
+      POSTGRES_PASSWORD: guardiao_password
+      POSTGRES_DB: guardiao_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - guardiao_postgres_data:/var/lib/postgresql/data
+    restart: always
+
+volumes:
+  guardiao_postgres_data:
+    driver: local
