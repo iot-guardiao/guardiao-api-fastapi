@@ -19,3 +19,8 @@ def listar_agendamentos(db: Session = Depends(get_db)):
 def criar_agendamento(data: AgendamentoCreate, db: Session = Depends(get_db)):
     agendamento = agendamento_service.create(db, data)
     return agendamento
+
+@router.get("/verificar/{sala_id}/{codigo}/")
+def verificar_agendamento(sala_id: str, codigo: str, db: Session = Depends(get_db)):
+    agendamento = agendamento_service.verify(db, sala_id, codigo)
+    return agendamento
