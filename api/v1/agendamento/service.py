@@ -15,19 +15,18 @@ class AgendamentoService:
     
     @handle_sqlalchemy_errors
     def create(self, db: Session, data: AgendamentoCreate):
-        
         agendamento_duplicado = db.query(Agendamento).filter(
-            Agendamento.sala == data.sala,
-            Agendamento.data == data.data,
-            Agendamento.hora_inicio == data.hora_inicio,
-            Agendamento.hora_fim == data.hora_fim,
+            Agendamento.responsavel == data.responsavel,  
+            Agendamento.data == data.data,  
+            Agendamento.hora_inicio < data.hora_fim,  
+            Agendamento.hora_fim > data.hora_inicio,  
         ).first()
         
         if agendamento_duplicado:
-            raise ExceptionConflict("Sala já agendada para o mesmo dia e horário.")
+            raise ExceptionConflict("Responsável já tem agendamento para o mesmo dia e horário em outra sala.")
         
         codigo_uuid = str(uuid.uuid4())
-        
+
         agendamento = Agendamento(
             responsavel=data.responsavel,
             sala=data.sala,
@@ -68,6 +67,4 @@ class AgendamentoService:
         if not agendamento:
             raise ExceptionConflict("Agendamento não encontrado.")
         
-        if agendamento:
-            return True
-        return False
+        return True
