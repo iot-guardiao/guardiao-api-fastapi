@@ -1,4 +1,3 @@
-# Schemas de entrada e saída (Pydantic)
 from datetime import date, time
 from pydantic import BaseModel
 

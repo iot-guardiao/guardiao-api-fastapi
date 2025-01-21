@@ -1,22 +1,12 @@
-from datetime import datetime
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-import smtplib
 import uuid
+from datetime import datetime
 from sqlalchemy.orm import Session
-
 from api._database.models import Agendamento
 from api.utils.exceptions import ExceptionConflict
-from api.utils.sqlalchemy_errors import handle_sqlalchemy_errors
 from api.v1.agendamento.shema import AgendamentoCreate
-import os
-from dotenv import load_dotenv
-load_dotenv()
-
-SMTP_SERVER = "smtp.gmail.com"
-PORT = 587
-LOGIN = os.getenv("LOGIN_EMAIL")
-PASSWORD = os.getenv("LOGIN_PASSWORD")
+from api.v1.email.qrcode_image import generate_qr_code
+from api.v1.email.qrcode_email import send_email_with_qrcode
+from api.utils.sqlalchemy_errors import handle_sqlalchemy_errors
 
 class AgendamentoService:
     
@@ -48,7 +38,16 @@ class AgendamentoService:
             codigo=codigo_uuid  
         )
         
-        self.send_email(data.email)
+        generate_qr_code(codigo_uuid, f"api/v1/agendamento/qrcodes/{codigo_uuid}.png")
+        
+        send_email_with_qrcode(
+            f"api/v1/agendamento/qrcodes/{codigo_uuid}.png",
+            data.email,
+            data.responsavel,
+            data.sala,
+            f"{data.hora_inicio} - {data.hora_fim}",
+            data.data
+        )
         
         db.add(agendamento)
         db.commit()
@@ -72,30 +71,3 @@ class AgendamentoService:
         if agendamento:
             return True
         return False
-    
-    def send_email(self, receiver_email: str):
-        sender_email = LOGIN
-
-        html = """\
-            <html>
-            <body>
-                <p>Hi,<br>
-                This is the test email</p>
-            </body>
-            </html>
-        """
-        message = MIMEMultipart("alternative")
-        message["Subject"] = "Test subject"
-        message["From"] = sender_email
-        message["To"] = receiver_email
-        part = MIMEText(html, "html")
-        message.attach(part)
-
-        try:
-            with smtplib.SMTP(SMTP_SERVER, PORT) as server:
-                server.starttls()
-                server.login(LOGIN, PASSWORD)
-                server.sendmail(sender_email, receiver_email, message.as_string())
-            return {"msg": "Email enviado com sucesso!"}
-        except Exception as e:
-            return {"msg": f"Erro ao enviar email: {e}"}
